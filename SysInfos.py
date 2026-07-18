@@ -102,7 +102,6 @@ def collect_all_system_data():
     country_code, region, city = get_location()
     ram = psutil.virtual_memory()
     
-    # هذا القاموس يحتوي على كل المخرجات بشكل منظم جداً ليطابق حقول قاعدة البيانات
     system_data = {
         "client_id": f"Client_{get_device_uuid()}",
         "device_user": f"{os.environ.get('COMPUTERNAME', 'Unknown')}/{os.environ.get('USERNAME', 'Unknown')}",
@@ -121,21 +120,26 @@ def collect_all_system_data():
         "antivirus": get_antivirus_info(),
         "firewall_enabled": is_firewall_enabled()
     }
-    
     return system_data
 
 if __name__ == "__main__":
-    logger.info("Starting system data collection...")
+    # جلب البيانات
     data = collect_all_system_data()
-    logger.info(f"Collected Data: {data}")
     
-    # هنا يتم الربط مع السكريبت المسؤول عن قاعدة البيانات:
-    # خيار أ: إذا كنت تستدعي هذا السكريبت كـ Module في السكريبت الرئيسي:
-    # فقط قم بعمل return data داخل دالة.
-    
-    # خيار ب: إذا كنت ترسل البيانات عبر API إلى السيرفر (الذي يحفظها في الباكيند):
-    # try:
-    #     response = requests.post("https://your-backend-server.com/api/agent/sync", json=data, timeout=10)
-    #     logger.info(f"Sync status: {response.status_code}")
-    # except Exception as e:
-    #     logger.error(f"Failed to sync with database API: {e}")
+    # تحويل البيانات إلى نص منسق ومفهوم ليتم التقاطه عبر الـ stdout في السكريبت الثاني
+    final_report = f"""=== SYSTEM REPORT ===
+Client ID: {data['client_id']}
+Device User: {data['device_user']}
+Public IP: {data['public_ip']}
+Location: {data['city']}, {data['region']}, {data['country']}
+OS Version: {data['os_version']}
+Camera Status: {'Enabled' if data['camera_enabled'] else 'Disabled'} (Privacy: {data['camera_privacy']})
+Privilege: {data['user_privilege']}
+CPU Cores: {data['cpu_cores']} (Usage: {data['cpu_usage_percent']}%)
+RAM: {data['ram_total_gb']} GB (Usage: {data['ram_usage_percent']}%)
+Antivirus: {data['antivirus']}
+Firewall: {'ON' if data['firewall_enabled'] else 'OFF'}
+====================="""
+
+    # طباعة صريحة ليتم قنصها من الرام
+    print(final_report)
